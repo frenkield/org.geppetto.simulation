@@ -54,6 +54,11 @@ public class ExtractParticleArrayTreeVisitor extends DefaultStateVisitor {
 
         double id = Double.parseDouble(node.getId().replaceAll("[^0-9]", ""));
 
+        // super hack to deal with zeroth particle since zero is neither positive nor negative
+        if (id == 0) {
+            id = 0.5;
+        }
+
         if (node.getKind() == 2.1f) {
             id *= -1;
         }
