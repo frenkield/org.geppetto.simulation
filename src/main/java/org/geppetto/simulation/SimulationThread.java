@@ -61,6 +61,7 @@ class SimulationThread extends Thread
 	private String _requestID;
 	private double _runtime;
 	private String _timeStepUnit;
+    private boolean enableBinaryProtocol = true;
 
 	/**
 	 * @param context
@@ -146,11 +147,13 @@ class SimulationThread extends Thread
 					this._simulationStarted = true;
 				}else{
 
+                    if (enableBinaryProtocol) {
+                        _simulationCallback.particleUpdateReady(SimulationEvents.SCENE_UPDATE, _requestID, particles);
 
-                    _simulationCallback.updateReady(SimulationEvents.SCENE_UPDATE, _requestID, scene);
+                    } else {
+                        _simulationCallback.updateReady(SimulationEvents.SCENE_UPDATE, _requestID, scene);
+                    }
 
-
-                    _simulationCallback.particleUpdateReady(SimulationEvents.SCENE_UPDATE, _requestID, particles);
 					_logger.info("Update sent to Simulation Callback Listener");
 				}
 			}

@@ -52,6 +52,14 @@ public class ExtractParticleArrayTreeVisitor extends DefaultStateVisitor {
 
 		Point position = node.getPosition();
 
+        double id = Double.parseDouble(node.getId().replaceAll("[^0-9]", ""));
+
+        if (node.getKind() == 2.1f) {
+            id *= -1;
+        }
+
+        particles.add(id);
+
         particles.add(position.getX());
         particles.add(position.getY());
         particles.add(position.getZ());
