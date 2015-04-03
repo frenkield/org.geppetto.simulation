@@ -33,6 +33,7 @@
 
 package org.geppetto.simulation;
 
+import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geppetto.core.model.quantities.PhysicalQuantity;
@@ -44,6 +45,7 @@ import org.geppetto.core.simulation.ISimulationCallbackListener;
 import org.geppetto.core.simulation.ISimulationCallbackListener.SimulationEvents;
 import org.geppetto.simulation.visitor.CheckSteppedSimulatorsVisitor;
 import org.geppetto.simulation.visitor.ExitVisitor;
+import org.geppetto.simulation.visitor.ExtractParticleArrayTreeVisitor;
 import org.geppetto.simulation.visitor.SimulationVisitor;
 import org.geppetto.simulation.visitor.TimeVisitor;
 
@@ -120,9 +122,20 @@ class SimulationThread extends Thread
 			this.setGlobalTime(timeVisitor.getTime(), _sessionContext.getRuntimeTreeRoot());
 			
 			SerializeTreeVisitor updateClientVisitor = new SerializeTreeVisitor();
+
+            long startTime = System.currentTimeMillis();
 			_sessionContext.getRuntimeTreeRoot().apply(updateClientVisitor);
-			
-			ExitVisitor exitVisitor = new ExitVisitor(_simulationCallback);
+            _logger.info(String.format("++++++++++++++++ serialized in %dms", System.currentTimeMillis() - startTime));
+
+
+
+            ExtractParticleArrayTreeVisitor extractParticleArrayTreeVisitor = new ExtractParticleArrayTreeVisitor();
+            _sessionContext.getRuntimeTreeRoot().apply(extractParticleArrayTreeVisitor);
+            List<Double> particles = extractParticleArrayTreeVisitor.getParticles();
+
+
+
+            ExitVisitor exitVisitor = new ExitVisitor(_simulationCallback);
 			_sessionContext.getRuntimeTreeRoot().apply(exitVisitor);
 			
 			String scene = updateClientVisitor.getSerializedTree();
@@ -132,7 +145,12 @@ class SimulationThread extends Thread
 					_logger.info("First step of simulation sent to Simulation Callback Listener");
 					this._simulationStarted = true;
 				}else{
-					_simulationCallback.updateReady(SimulationEvents.SCENE_UPDATE, _requestID, scene);
+
+
+                    _simulationCallback.updateReady(SimulationEvents.SCENE_UPDATE, _requestID, scene);
+
+
+                    _simulationCallback.particleUpdateReady(SimulationEvents.SCENE_UPDATE, _requestID, particles);
 					_logger.info("Update sent to Simulation Callback Listener");
 				}
 			}

@@ -121,8 +121,10 @@ public class SimulationVisitor extends DefaultStateVisitor
 					try
 					{
 						simulatorRuntime.setStatus(SimulatorRuntimeStatus.STEPPING);
+
 						simulator.simulate(new TimeConfiguration(null, 1, 1), node);
-						simulatorRuntime.incrementStepsConsumed();
+
+                        simulatorRuntime.incrementStepsConsumed();
 					}
 					catch(GeppettoExecutionException e)
 					{
