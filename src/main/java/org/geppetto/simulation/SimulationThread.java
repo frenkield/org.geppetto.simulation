@@ -121,42 +121,43 @@ class SimulationThread extends Thread
 			_timeStepUnit = timeVisitor.getTimeStepUnit();
 			//set global time
 			this.setGlobalTime(timeVisitor.getTime(), _sessionContext.getRuntimeTreeRoot());
-			
-			SerializeTreeVisitor updateClientVisitor = new SerializeTreeVisitor();
 
-            long startTime = System.currentTimeMillis();
-			_sessionContext.getRuntimeTreeRoot().apply(updateClientVisitor);
-            _logger.info(String.format("++++++++++++++++ serialized in %dms", System.currentTimeMillis() - startTime));
+            if (this._simulationStarted && enableBinaryProtocol) {
 
+                ExtractParticleArrayTreeVisitor extractParticleArrayTreeVisitor = new ExtractParticleArrayTreeVisitor();
+                _sessionContext.getRuntimeTreeRoot().apply(extractParticleArrayTreeVisitor);
+                List<Double> particles = extractParticleArrayTreeVisitor.getParticles();
 
+                _logger.info("extracted particle array - liquid = "
+                             + extractParticleArrayTreeVisitor.getLiquidParticleCount()
+                             + ", elastic = " + extractParticleArrayTreeVisitor.getElasticParticleCount());
 
-            ExtractParticleArrayTreeVisitor extractParticleArrayTreeVisitor = new ExtractParticleArrayTreeVisitor();
-            _sessionContext.getRuntimeTreeRoot().apply(extractParticleArrayTreeVisitor);
-            List<Double> particles = extractParticleArrayTreeVisitor.getParticles();
+                _simulationCallback.particleUpdateReady(SimulationEvents.SCENE_UPDATE, _requestID, particles);
 
+            } else {
 
+                long startTime = System.currentTimeMillis();
+                SerializeTreeVisitor updateClientVisitor = new SerializeTreeVisitor();
+                _sessionContext.getRuntimeTreeRoot().apply(updateClientVisitor);
+                _logger.info(String.format("serialized scene in %dms", System.currentTimeMillis() - startTime));
+
+                String scene = updateClientVisitor.getSerializedTree();
+
+                if(scene!=null){
+                    if(!this._simulationStarted){
+                        _simulationCallback.updateReady(SimulationEvents.START_SIMULATION, _requestID,scene);
+                        _logger.info("First step of simulation sent to Simulation Callback Listener");
+                        this._simulationStarted = true;
+                    }else{
+                        _simulationCallback.updateReady(SimulationEvents.SCENE_UPDATE, _requestID, scene);
+                        _logger.info("Update sent to Simulation Callback Listener");
+                    }
+                }
+            }
 
             ExitVisitor exitVisitor = new ExitVisitor(_simulationCallback);
 			_sessionContext.getRuntimeTreeRoot().apply(exitVisitor);
-			
-			String scene = updateClientVisitor.getSerializedTree();
-			if(scene!=null){
-				if(!this._simulationStarted){
-					_simulationCallback.updateReady(SimulationEvents.START_SIMULATION, _requestID,scene);
-					_logger.info("First step of simulation sent to Simulation Callback Listener");
-					this._simulationStarted = true;
-				}else{
 
-                    if (enableBinaryProtocol) {
-                        _simulationCallback.particleUpdateReady(SimulationEvents.SCENE_UPDATE, _requestID, particles);
-
-                    } else {
-                        _simulationCallback.updateReady(SimulationEvents.SCENE_UPDATE, _requestID, scene);
-                    }
-
-					_logger.info("Update sent to Simulation Callback Listener");
-				}
-			}
 		}
 		else if(getSessionContext().getStatus().equals(SimulationRuntimeStatus.STOPPED)){
 			_simulationCallback.updateReady(SimulationEvents.STOP_SIMULATION, _requestID,null);

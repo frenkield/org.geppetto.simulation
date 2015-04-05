@@ -45,7 +45,9 @@ import org.geppetto.core.visualisation.model.Point;
 
 public class ExtractParticleArrayTreeVisitor extends DefaultStateVisitor {
 
-    List<Double> particles = new ArrayList<>();
+    private List<Double> particles = new ArrayList<>();
+    private int liquidParticleCount = 0;
+    private int elasticParticleCount = 0;
 
 	@Override
 	public boolean visitParticleNode(ParticleNode node) {
@@ -61,6 +63,9 @@ public class ExtractParticleArrayTreeVisitor extends DefaultStateVisitor {
 
         if (node.getKind() == 2.1f) {
             id *= -1;
+            elasticParticleCount++;
+        } else {
+            liquidParticleCount++;
         }
 
         particles.add(id);
@@ -74,5 +79,13 @@ public class ExtractParticleArrayTreeVisitor extends DefaultStateVisitor {
 
     public List<Double> getParticles() {
         return particles;
+    }
+
+    public int getLiquidParticleCount() {
+        return liquidParticleCount;
+    }
+
+    public int getElasticParticleCount() {
+        return elasticParticleCount;
     }
 }
