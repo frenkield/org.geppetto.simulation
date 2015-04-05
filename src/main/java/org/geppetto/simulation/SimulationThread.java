@@ -91,17 +91,22 @@ class SimulationThread extends Thread
 		SimulationVisitor simulationVisitor=new SimulationVisitor(_sessionContext,_simulationCallback,_requestID);
 		while(getSessionContext().getStatus().equals(SimulationRuntimeStatus.RUNNING) )
 		{
-				long calculateTime =System.currentTimeMillis() - _timeElapsed;
-				
-				//update only if time elapsed since last client update doesn't exceed
-				//the update cycle of application.
-				if( calculateTime >= _updateCycles){
-					_sessionContext.getRuntimeTreeRoot().apply(simulationVisitor);
-					updateRuntimeTreeClient();
+            long calculateTime = System.currentTimeMillis() - _timeElapsed;
 
-					_timeElapsed = System.currentTimeMillis();
-					_logger.info("Updating after " + calculateTime + " ms");
-				}
+            //update only if time elapsed since last client update doesn't exceed
+            //the update cycle of application.
+            if( calculateTime >= _updateCycles){
+
+                long startTime = System.currentTimeMillis();
+
+                _sessionContext.getRuntimeTreeRoot().apply(simulationVisitor);
+                updateRuntimeTreeClient();
+
+                _timeElapsed = System.currentTimeMillis();
+                _logger.info("Updating after " + calculateTime + " ms");
+
+                _logger.info("full simulation iteration took " + (System.currentTimeMillis() - startTime) + " ms");
+            }
 		}
 	}
 	
